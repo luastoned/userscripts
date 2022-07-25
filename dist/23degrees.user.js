@@ -1,19 +1,22 @@
 // ==UserScript==
 // @name        23° Context Switcher
-// @version     1.0
-// @namespace   @SpaceGregor
-// @author      @SpaceGregor
 // @description Switch 23° Context
+// @author      @SpaceGregor
+// @version     1.1
+// @namespace   @SpaceGregor
 // @match       *://*/*
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @noframes
-// @require     https://unpkg.com/tweakpane@3.0.7/dist/tweakpane.js
-// @require     https://unpkg.com/@tweakpane/plugin-essentials@0.1.4/dist/tweakpane-plugin-essentials.js
+// @require     https://cdn.jsdelivr.net/npm/tweakpane@3.1.0/dist/tweakpane.min.js
+// @require     https://cdn.jsdelivr.net/npm/@tweakpane/plugin-essentials@0.1.4/dist/tweakpane-plugin-essentials.min.js
 // @icon        https://doh.23degrees.io/assets/favicon-32x32.png
 // @updateURL   https://raw.githubusercontent.com/luastoned/userscripts/main/dist/23degrees.user.js
 // @downloadURL https://raw.githubusercontent.com/luastoned/userscripts/main/dist/23degrees.user.js
 // ==/UserScript==
+
+// @require     https://unpkg.com/tweakpane@3.1.0/dist/tweakpane.js
+// @require     https://unpkg.com/@tweakpane/plugin-essentials@0.1.4/dist/tweakpane-plugin-essentials.js
 
 // Setup Tweakpane Container
 const paneHost = document.createElement('div');
