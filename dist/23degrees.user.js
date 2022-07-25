@@ -2,7 +2,7 @@
 // @name        23° Context Switcher
 // @description Switch 23° Context
 // @author      @SpaceGregor
-// @version     1.1
+// @version     1.2
 // @namespace   @SpaceGregor
 // @match       *://*/*
 // @grant       GM_getValue
@@ -171,7 +171,15 @@ dragElement(paneHost);
 
 const findFrames = () => {
   const iFrames = Array.from(document.querySelectorAll('iframe'));
-  return iFrames.filter((obj) => obj.src.includes('localhost:2385') || obj.src.includes('23degrees.io') || obj.src.includes('23degrees.eu'));
+  return iFrames.filter(
+    (obj) =>
+      obj.src.includes('localhost:2385') ||
+      obj.src.includes('23degrees.io') ||
+      obj.src.includes('23degrees.eu') ||
+      obj.dataset.src?.includes('localhost:2385') ||
+      obj.dataset.src?.includes('23degrees.io') ||
+      obj.dataset.src?.includes('23degrees.eu')
+  );
 };
 
 const findScripts = () => {
@@ -185,26 +193,28 @@ monitors.foundScripts = findScripts().length;
 const switchContext = (domain) => {
   const fullDomain = domainUrls[domain];
   const head = document.getElementsByTagName('head')[0];
+  const body = document.getElementsByTagName('body')[0];
 
   for (const frame of findFrames()) {
     const parent = frame.parentNode;
-    const frameSrc = frame.src.replace(/https?:\/\/(localhost:2385|(app|doh).23degrees.(io|eu))/, fullDomain) + "?log23=true";
+    const frameSrc = (frame.getAttribute('src') || frame.getAttribute('data-src') || '').replace(/https?:\/\/(localhost:2385|(app|doh).23degrees.(io|eu))/, fullDomain) + '?log23=true';
     const frameClone = frame.cloneNode(true);
     frame.remove();
 
     frameClone.src = frameSrc;
-    parent.appendChild(frameClone);
+    (parent || body).appendChild(frameClone);
 
     monitors.switchedFrames++;
   }
 
   for (const script of findScripts()) {
+    const parent = script.parentNode;
     const scriptSrc = script.src.replace(/https?:\/\/(localhost:2385|(app|doh).23degrees.(io|eu))/, fullDomain);
     script.remove();
 
     const newScript = document.createElement('script');
     newScript.src = scriptSrc;
-    head.appendChild(newScript);
+    (parent || head).appendChild(newScript);
 
     monitors.switchedScripts++;
   }
