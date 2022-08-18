@@ -2,7 +2,7 @@
 // @name        23° Context Switcher
 // @description Switch 23° Context
 // @author      @SpaceGregor
-// @version     1.2
+// @version     1.3
 // @namespace   @SpaceGregor
 // @match       *://*/*
 // @grant       GM_getValue
@@ -176,9 +176,9 @@ const findFrames = () => {
       obj.src.includes('localhost:2385') ||
       obj.src.includes('23degrees.io') ||
       obj.src.includes('23degrees.eu') ||
-      obj.dataset.src?.includes('localhost:2385') ||
-      obj.dataset.src?.includes('23degrees.io') ||
-      obj.dataset.src?.includes('23degrees.eu')
+      obj.dataset['23src']?.includes('localhost:2385') ||
+      obj.dataset['23src']?.includes('23degrees.io') ||
+      obj.dataset['23src']?.includes('23degrees.eu')
   );
 };
 
@@ -197,11 +197,17 @@ const switchContext = (domain) => {
 
   for (const frame of findFrames()) {
     const parent = frame.parentNode;
-    const frameSrc = (frame.getAttribute('src') || frame.getAttribute('data-src') || '').replace(/https?:\/\/(localhost:2385|(app|doh).23degrees.(io|eu))/, fullDomain) + '?log23=true';
     const frameClone = frame.cloneNode(true);
-    frame.remove();
 
-    frameClone.src = frameSrc;
+    if (frame.getAttribute('src')) {
+      frameClone.src = frame.getAttribute('src').replace(/https?:\/\/(localhost:2385|(app|doh).23degrees.(io|eu))/, fullDomain) + '?log23=true';
+    }
+
+    if (frame.getAttribute('data-23src')) {
+      frameClone.dataset['23src'] = frame.getAttribute('data-23src').replace(/https?:\/\/(localhost:2385|(app|doh).23degrees.(io|eu))/, fullDomain) + '?log23=true';
+    }
+
+    frame.remove();
     (parent || body).appendChild(frameClone);
 
     monitors.switchedFrames++;
