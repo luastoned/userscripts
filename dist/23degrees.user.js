@@ -2,7 +2,7 @@
 // @name        23° Context Switcher
 // @description Switch 23° Context
 // @author      @SpaceGregor
-// @version     1.4
+// @version     1.5
 // @namespace   @SpaceGregor
 // @match       *://*/*
 // @grant       GM_getValue
@@ -34,12 +34,14 @@ document.body.appendChild(paneHost);
 const domains = {
   local: 0,
   doh: 1,
-  app: 2,
-  dohEU: 3,
-  appEU: 4,
+  pre: 2,
+  app: 3,
+  dohEU: 4,
+  preEU: 5,
+  appEU: 6,
 };
 
-const domainLabels = ['Local', 'Doh.io', 'Pre.io', 'App.io', '', 'Doh.eu', 'Pre.eu', 'App.eu'];
+const domainLabels = ['Local', 'DohIO', 'PreIO', 'AppIO', '', 'DohEU', 'PreEU', 'AppEU'];
 
 const domainValues = ['local', 'doh', 'pre', 'app', 'dohEU', 'preEU', 'appEU'];
 
@@ -83,7 +85,7 @@ pane
     size: [4, 2],
     cells: (x, y) => ({
       title: domainLabels[x + y * 3],
-      value: [0, 1, 2, -1, 3, 4][x + y * 3],
+      value: [0, 1, 2, 3, -1, 4, 5, 6][x + y * 3],
     }),
     label: 'Domain',
   })
