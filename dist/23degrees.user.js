@@ -2,7 +2,7 @@
 // @name        23° Context Switcher
 // @description Switch 23° Context
 // @author      @SpaceGregor
-// @version     1.3
+// @version     1.4
 // @namespace   @SpaceGregor
 // @match       *://*/*
 // @grant       GM_getValue
@@ -39,15 +39,17 @@ const domains = {
   appEU: 4,
 };
 
-const domainLabels = ['Local', 'Doh.io', 'App.io', '', 'Doh.eu', 'App.eu'];
+const domainLabels = ['Local', 'Doh.io', 'Pre.io', 'App.io', '', 'Doh.eu', 'Pre.eu', 'App.eu'];
 
-const domainValues = ['local', 'doh', 'app', 'dohEU', 'appEU'];
+const domainValues = ['local', 'doh', 'pre', 'app', 'dohEU', 'preEU', 'appEU'];
 
 const domainUrls = {
   local: 'http://localhost:2385',
   doh: 'https://doh.23degrees.io',
+  pre: 'https://pre.23degrees.io',
   app: 'https://app.23degrees.io',
   dohEU: 'https://doh.23degrees.eu',
+  preEU: 'https://pre.23degrees.eu',
   appEU: 'https://app.23degrees.eu',
 };
 
@@ -78,7 +80,7 @@ pane
   .addInput(settings, 'domain', {
     view: 'radiogrid',
     groupName: 'domain',
-    size: [3, 2],
+    size: [4, 2],
     cells: (x, y) => ({
       title: domainLabels[x + y * 3],
       value: [0, 1, 2, -1, 3, 4][x + y * 3],
@@ -200,11 +202,11 @@ const switchContext = (domain) => {
     const frameClone = frame.cloneNode(true);
 
     if (frame.getAttribute('src')) {
-      frameClone.src = frame.getAttribute('src').replace(/https?:\/\/(localhost:2385|(app|doh).23degrees.(io|eu))/, fullDomain) + '?log23=true';
+      frameClone.src = frame.getAttribute('src').replace(/https?:\/\/(localhost:2385|(app|doh|pre).23degrees.(io|eu))/, fullDomain) + '?log23=true';
     }
 
     if (frame.getAttribute('data-23src')) {
-      frameClone.dataset['23src'] = frame.getAttribute('data-23src').replace(/https?:\/\/(localhost:2385|(app|doh).23degrees.(io|eu))/, fullDomain) + '?log23=true';
+      frameClone.dataset['23src'] = frame.getAttribute('data-23src').replace(/https?:\/\/(localhost:2385|(app|doh|pre).23degrees.(io|eu))/, fullDomain) + '?log23=true';
     }
 
     frame.remove();
@@ -215,7 +217,7 @@ const switchContext = (domain) => {
 
   for (const script of findScripts()) {
     const parent = script.parentNode;
-    const scriptSrc = script.src.replace(/https?:\/\/(localhost:2385|(app|doh).23degrees.(io|eu))/, fullDomain);
+    const scriptSrc = script.src.replace(/https?:\/\/(localhost:2385|(app|doh|pre).23degrees.(io|eu))/, fullDomain);
     script.remove();
 
     const newScript = document.createElement('script');
