@@ -2,7 +2,7 @@
 // @name        23° Context Switcher
 // @description Switch 23° Context
 // @author      @SpaceGregor
-// @version     1.5
+// @version     1.6
 // @namespace   @SpaceGregor
 // @match       *://*/*
 // @grant       GM_getValue
@@ -17,6 +17,8 @@
 
 // @require     https://unpkg.com/tweakpane@3.1.0/dist/tweakpane.js
 // @require     https://unpkg.com/@tweakpane/plugin-essentials@0.1.4/dist/tweakpane-plugin-essentials.js
+
+// https://cocopon.github.io/tweakpane/migration/v4/
 
 // Setup Tweakpane Container
 const paneHost = document.createElement('div');
@@ -43,7 +45,7 @@ const domains = {
 
 const domainLabels = ['Local', 'DohIO', 'PreIO', 'AppIO', '', 'DohEU', 'PreEU', 'AppEU'];
 
-const domainValues = ['local', 'doh', 'pre', 'app', 'dohEU', 'preEU', 'appEU'];
+const domainValues = ['local', 'doh', 'pre', 'app', 'local', 'dohEU', 'preEU', 'appEU'];
 
 const domainUrls = {
   local: 'http://localhost:2385',
@@ -70,6 +72,7 @@ const monitors = {
 const pane = new Tweakpane.Pane({
   title: '23° Context Switcher',
   container: paneHost,
+  expanded: false,
 });
 
 pane.registerPlugin(TweakpaneEssentialsPlugin);
@@ -84,8 +87,8 @@ pane
     groupName: 'domain',
     size: [4, 2],
     cells: (x, y) => ({
-      title: domainLabels[x + y * 3],
-      value: [0, 1, 2, 3, -1, 4, 5, 6][x + y * 3],
+      title: domainLabels[x + y * 4],
+      value: [0, 1, 2, 3, 4, 5, 6, 7][x + y * 4],
     }),
     label: 'Domain',
   })
@@ -219,8 +222,14 @@ const switchContext = (domain) => {
 
   for (const script of findScripts()) {
     const parent = script.parentNode;
-    const scriptSrc = script.src.replace(/https?:\/\/(localhost:2385|(app|doh|pre).23degrees.(io|eu))/, fullDomain);
+    let scriptSrc = script.src.replace(/https?:\/\/(localhost:2385|(app|doh|pre).23degrees.(io|eu))/, fullDomain);
     script.remove();
+
+    if (!scriptSrc.includes("?")) {
+      scriptSrc += "?raw=true";
+    } else {
+      scriptSrc += "&raw=true";
+    }
 
     const newScript = document.createElement('script');
     newScript.src = scriptSrc;
