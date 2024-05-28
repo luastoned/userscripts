@@ -2,7 +2,7 @@
 // @name        23° Context Switcher
 // @description Switch 23° Context
 // @author      @SpaceGregor
-// @version     1.6
+// @version     1.7
 // @namespace   @SpaceGregor
 // @match       *://*/*
 // @grant       GM_getValue
@@ -59,7 +59,8 @@ const domainUrls = {
 
 const settings = {
   domain: domains[GM_getValue('23ctx-domain', 'app')],
-  autoSwitch: GM_getValue('23ctx-switch', false),
+  switchFrames: GM_getValue('23ctx-iframes', false),
+  switchScripts: GM_getValue('23ctx-scripts', false),
 };
 
 const monitors = {
@@ -77,8 +78,12 @@ const pane = new Tweakpane.Pane({
 
 pane.registerPlugin(TweakpaneEssentialsPlugin);
 
-pane.addInput(settings, 'autoSwitch', { label: 'Auto Switch' }).on('change', (event) => {
-  GM_setValue('23ctx-switch', event.value);
+pane.addInput(settings, 'switchFrames', { label: 'iFrames' }).on('change', (event) => {
+  GM_setValue('23ctx-iframes', event.value);
+});
+
+pane.addInput(settings, 'switchScripts', { label: 'Scripts' }).on('change', (event) => {
+  GM_setValue('23ctx-scripts', event.value);
 });
 
 pane
@@ -98,12 +103,25 @@ pane
     }
   });
 
-const switchButton = pane.addButton({
-  title: 'Switch Context',
+const switchFramesButton = pane.addButton({
+  title: 'Switch Frames',
   label: 'Action', // optional
 });
 
-switchButton.on('click', () => switchContext(domainValues[settings.domain]));
+const switchScriptsButton = pane.addButton({
+  title: 'Switch Scripts',
+  label: 'Action', // optional
+});
+
+switchFramesButton.on('click', () => {
+  const domain = domainValues[settings.domain];
+  switchFrames(domain);
+});
+
+switchScriptsButton.on('click', () => {
+  const domain = domainValues[settings.domain];
+  switchScripts(domain);
+});
 
 const statusFolder = pane.addFolder({
   title: 'Status',
@@ -183,6 +201,9 @@ const findFrames = () => {
       obj.src.includes('localhost:2385') ||
       obj.src.includes('23degrees.io') ||
       obj.src.includes('23degrees.eu') ||
+      obj.dataset['src']?.includes('localhost:2385') ||
+      obj.dataset['src']?.includes('23degrees.io') ||
+      obj.dataset['src']?.includes('23degrees.eu') ||
       obj.dataset['23src']?.includes('localhost:2385') ||
       obj.dataset['23src']?.includes('23degrees.io') ||
       obj.dataset['23src']?.includes('23degrees.eu')
@@ -197,7 +218,7 @@ const findScripts = () => {
 monitors.foundFrames = findFrames().length;
 monitors.foundScripts = findScripts().length;
 
-const switchContext = (domain) => {
+const switchFrames = (domain) => {
   const fullDomain = domainUrls[domain];
   const head = document.getElementsByTagName('head')[0];
   const body = document.getElementsByTagName('body')[0];
@@ -211,7 +232,8 @@ const switchContext = (domain) => {
     }
 
     if (frame.getAttribute('data-23src')) {
-      frameClone.dataset['23src'] = frame.getAttribute('data-23src').replace(/https?:\/\/(localhost:2385|(app|doh|pre).23degrees.(io|eu))/, fullDomain) + '?log23=true';
+      frameClone.dataset['23src'] =
+        frame.getAttribute('data-23src').replace(/https?:\/\/(localhost:2385|(app|doh|pre).23degrees.(io|eu))/, fullDomain) + '?log23=true';
     }
 
     frame.remove();
@@ -219,16 +241,22 @@ const switchContext = (domain) => {
 
     monitors.switchedFrames++;
   }
+};
+
+const switchScripts = (domain) => {
+  const fullDomain = domainUrls[domain];
+  const head = document.getElementsByTagName('head')[0];
+  const body = document.getElementsByTagName('body')[0];
 
   for (const script of findScripts()) {
     const parent = script.parentNode;
     let scriptSrc = script.src.replace(/https?:\/\/(localhost:2385|(app|doh|pre).23degrees.(io|eu))/, fullDomain);
     script.remove();
 
-    if (!scriptSrc.includes("?")) {
-      scriptSrc += "?raw=true";
+    if (!scriptSrc.includes('?')) {
+      scriptSrc += '?raw=true';
     } else {
-      scriptSrc += "&raw=true";
+      scriptSrc += '&raw=true';
     }
 
     const newScript = document.createElement('script');
@@ -239,6 +267,12 @@ const switchContext = (domain) => {
   }
 };
 
-if (settings.autoSwitch) {
-  switchContext(domainValues[settings.domain]);
+if (settings.switchFrames) {
+  const domain = domainValues[settings.domain];
+  switchFrames(domain);
+}
+
+if (settings.switchScripts) {
+  const domain = domainValues[settings.domain];
+  switchScripts(domain);
 }
