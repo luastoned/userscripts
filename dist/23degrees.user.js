@@ -2,21 +2,21 @@
 // @name        23° Context Switcher
 // @description Switch 23° Context
 // @author      @SpaceGregor
-// @version     1.7
+// @version     1.8
 // @namespace   @SpaceGregor
 // @match       *://*/*
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @noframes
-// @require     https://cdn.jsdelivr.net/npm/tweakpane@3.1.0/dist/tweakpane.min.js
-// @require     https://cdn.jsdelivr.net/npm/@tweakpane/plugin-essentials@0.1.4/dist/tweakpane-plugin-essentials.min.js
+// @require     https://cdn.jsdelivr.net/npm/tweakpane@3.1.10/dist/tweakpane.min.js
+// @require     https://cdn.jsdelivr.net/npm/@tweakpane/plugin-essentials@0.1.8/dist/tweakpane-plugin-essentials.min.js
 // @icon        https://doh.23degrees.io/assets/favicon-32x32.png
 // @updateURL   https://raw.githubusercontent.com/luastoned/userscripts/main/dist/23degrees.user.js
 // @downloadURL https://raw.githubusercontent.com/luastoned/userscripts/main/dist/23degrees.user.js
 // ==/UserScript==
 
-// @require     https://unpkg.com/tweakpane@3.1.0/dist/tweakpane.js
-// @require     https://unpkg.com/@tweakpane/plugin-essentials@0.1.4/dist/tweakpane-plugin-essentials.js
+// @require     https://unpkg.com/tweakpane@4.0.5/dist/tweakpane.js
+// @require     https://unpkg.com/@tweakpane/plugin-essentials@0.2.1/dist/tweakpane-plugin-essentials.js
 
 // https://cocopon.github.io/tweakpane/migration/v4/
 
@@ -35,33 +35,34 @@ document.body.appendChild(paneHost);
 
 const domains = {
   local: 0,
-  doh: 1,
+  io: 1,
+  eu: 2,
+};
+
+const subDomains = {
+  doh: 0,
+  next: 1,
   pre: 2,
   app: 3,
-  dohEU: 4,
-  preEU: 5,
-  appEU: 6,
 };
 
-const domainLabels = ['Local', 'DohIO', 'PreIO', 'AppIO', '', 'DohEU', 'PreEU', 'AppEU'];
+const domainLabels = ['local', '.io', '.eu'];
+const subDomainLabels = ['Doh', 'Next', 'Pre', 'App'];
 
-const domainValues = ['local', 'doh', 'pre', 'app', 'local', 'dohEU', 'preEU', 'appEU'];
-
-const domainUrls = {
-  local: 'http://localhost:2385',
-  doh: 'https://doh.23degrees.io',
-  pre: 'https://pre.23degrees.io',
-  app: 'https://app.23degrees.io',
-  dohEU: 'https://doh.23degrees.eu',
-  preEU: 'https://pre.23degrees.eu',
-  appEU: 'https://app.23degrees.eu',
-};
+const domainValues = ['local', 'io', 'eu'];
+const subDomainValues = ['doh', 'next', 'pre', 'app'];
 
 const settings = {
-  domain: domains[GM_getValue('23ctx-domain', 'app')],
+  domain: domains[GM_getValue('23ctx-domain', 'io')],
+  subDomain: subDomains[GM_getValue('23ctx-subDomain', 'app')],
   switchFrames: GM_getValue('23ctx-iframes', false),
   switchScripts: GM_getValue('23ctx-scripts', false),
 };
+
+// version 2
+if (!settings.domain) {
+  settings.domain = 1;
+}
 
 const monitors = {
   foundFrames: 0,
@@ -90,16 +91,33 @@ pane
   .addInput(settings, 'domain', {
     view: 'radiogrid',
     groupName: 'domain',
-    size: [4, 2],
+    size: [3, 1],
     cells: (x, y) => ({
-      title: domainLabels[x + y * 4],
-      value: [0, 1, 2, 3, 4, 5, 6, 7][x + y * 4],
+      title: domainLabels[x + y * 3],
+      value: x + y * 3,
     }),
     label: 'Domain',
   })
   .on('change', (event) => {
     if (event.value >= 0) {
       GM_setValue('23ctx-domain', domainValues[event.value]);
+    }
+  });
+
+pane
+  .addInput(settings, 'subDomain', {
+    view: 'radiogrid',
+    groupName: 'subDomain',
+    size: [4, 1],
+    cells: (x, y) => ({
+      title: subDomainLabels[x + y * 4],
+      value: x + y * 4,
+    }),
+    label: 'Version',
+  })
+  .on('change', (event) => {
+    if (event.value >= 0) {
+      GM_setValue('23ctx-subDomain', subDomainValues[event.value]);
     }
   });
 
@@ -115,12 +133,14 @@ const switchScriptsButton = pane.addButton({
 
 switchFramesButton.on('click', () => {
   const domain = domainValues[settings.domain];
-  switchFrames(domain);
+  const subDomain = subDomainValues[settings.subDomain];
+  switchFrames(domain, subDomain);
 });
 
 switchScriptsButton.on('click', () => {
   const domain = domainValues[settings.domain];
-  switchScripts(domain);
+  const subDomain = subDomainValues[settings.subDomain];
+  switchScripts(domain, subDomain);
 });
 
 const statusFolder = pane.addFolder({
@@ -128,10 +148,10 @@ const statusFolder = pane.addFolder({
   expanded: false,
 });
 
-statusFolder.addMonitor(monitors, 'foundFrames', { label: 'Found iFrames', format: (obj) => obj.toFixed(0) });
-statusFolder.addMonitor(monitors, 'foundScripts', { label: 'Found Scripts', format: (obj) => obj.toFixed(0) });
-statusFolder.addMonitor(monitors, 'switchedFrames', { label: 'Switched iFrames', format: (obj) => obj.toFixed(0) });
-statusFolder.addMonitor(monitors, 'switchedScripts', { label: 'Switched Scripts', format: (obj) => obj.toFixed(0) });
+statusFolder.addMonitor(monitors, 'foundFrames', { readOnly: true, label: 'Found iFrames', format: (obj) => obj.toFixed(0) });
+statusFolder.addMonitor(monitors, 'foundScripts', { readOnly: true, label: 'Found Scripts', format: (obj) => obj.toFixed(0) });
+statusFolder.addMonitor(monitors, 'switchedFrames', { readOnly: true, label: 'Switched iFrames', format: (obj) => obj.toFixed(0) });
+statusFolder.addMonitor(monitors, 'switchedScripts', { readOnly: true, label: 'Switched Scripts', format: (obj) => obj.toFixed(0) });
 
 /*
 pane.addSeparator();
@@ -206,7 +226,7 @@ const findFrames = () => {
       obj.dataset['src']?.includes('23degrees.eu') ||
       obj.dataset['23src']?.includes('localhost:2385') ||
       obj.dataset['23src']?.includes('23degrees.io') ||
-      obj.dataset['23src']?.includes('23degrees.eu')
+      obj.dataset['23src']?.includes('23degrees.eu'),
   );
 };
 
@@ -218,8 +238,10 @@ const findScripts = () => {
 monitors.foundFrames = findFrames().length;
 monitors.foundScripts = findScripts().length;
 
-const switchFrames = (domain) => {
-  const fullDomain = domainUrls[domain];
+const switchFrames = (domain, subDomain) => {
+  let fullDomain = `https://${subDomain}.23degrees.${domain}`;
+  if (domain === 'local') fullDomain = 'http://localhost:2385';
+
   const head = document.getElementsByTagName('head')[0];
   const body = document.getElementsByTagName('body')[0];
 
@@ -228,12 +250,21 @@ const switchFrames = (domain) => {
     const frameClone = frame.cloneNode(true);
 
     if (frame.getAttribute('src')) {
-      frameClone.src = frame.getAttribute('src').replace(/https?:\/\/(localhost:2385|(app|doh|pre).23degrees.(io|eu))/, fullDomain) + '?log23=true';
+      let frameSrc = frame.getAttribute('src').replace(/https?:\/\/(localhost:2385|(app|doh|next|pre).23degrees.(io|eu))/, fullDomain);
+      if (!frameSrc.includes('log23')) {
+        frameSrc += frameSrc.includes('?') ? '&log23=true' : '?log23=true';
+      }
+
+      frameClone.src = frameSrc;
     }
 
     if (frame.getAttribute('data-23src')) {
-      frameClone.dataset['23src'] =
-        frame.getAttribute('data-23src').replace(/https?:\/\/(localhost:2385|(app|doh|pre).23degrees.(io|eu))/, fullDomain) + '?log23=true';
+      let frameSrc = frame.getAttribute('data-23src').replace(/https?:\/\/(localhost:2385|(app|doh|next|pre).23degrees.(io|eu))/, fullDomain);
+      if (!frameSrc.includes('log23')) {
+        frameSrc += frameSrc.includes('?') ? '&log23=true' : '?log23=true';
+      }
+
+      frameClone.dataset['23src'] = frameSrc;
     }
 
     frame.remove();
@@ -243,20 +274,20 @@ const switchFrames = (domain) => {
   }
 };
 
-const switchScripts = (domain) => {
-  const fullDomain = domainUrls[domain];
+const switchScripts = (domain, subDomain) => {
+  let fullDomain = `https://${subDomain}.23degrees.${domain}`;
+  if (domain === 'local') fullDomain = 'http://localhost:2385';
+
   const head = document.getElementsByTagName('head')[0];
   const body = document.getElementsByTagName('body')[0];
 
   for (const script of findScripts()) {
     const parent = script.parentNode;
-    let scriptSrc = script.src.replace(/https?:\/\/(localhost:2385|(app|doh|pre).23degrees.(io|eu))/, fullDomain);
+    let scriptSrc = script.src.replace(/https?:\/\/(localhost:2385|(app|doh|next|pre).23degrees.(io|eu))/, fullDomain);
     script.remove();
 
-    if (!scriptSrc.includes('?')) {
-      scriptSrc += '?raw=true';
-    } else {
-      scriptSrc += '&raw=true';
+    if (!scriptSrc.includes('raw=true')) {
+      scriptSrc += scriptSrc.includes('?') ? '&raw=true' : '?raw=true';
     }
 
     const newScript = document.createElement('script');
