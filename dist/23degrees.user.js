@@ -2,7 +2,7 @@
 // @name        23° Context Switcher
 // @description Switch 23° Context
 // @author      @SpaceGregor
-// @version     1.8
+// @version     1.9
 // @namespace   @SpaceGregor
 // @match       *://*/*
 // @grant       GM_getValue
@@ -91,10 +91,10 @@ pane
   .addInput(settings, 'domain', {
     view: 'radiogrid',
     groupName: 'domain',
-    size: [3, 1],
+    size: [domainLabels.length, 1],
     cells: (x, y) => ({
-      title: domainLabels[x + y * 3],
-      value: x + y * 3,
+      title: domainLabels[x + y * domainLabels.length],
+      value: x + y * domainLabels.length,
     }),
     label: 'Domain',
   })
@@ -108,10 +108,10 @@ pane
   .addInput(settings, 'subDomain', {
     view: 'radiogrid',
     groupName: 'subDomain',
-    size: [4, 1],
+    size: [subDomainValues.length, 1],
     cells: (x, y) => ({
-      title: subDomainLabels[x + y * 4],
-      value: x + y * 4,
+      title: subDomainLabels[x + y * subDomainValues.length],
+      value: x + y * subDomainValues.length,
     }),
     label: 'Version',
   })
@@ -298,12 +298,24 @@ const switchScripts = (domain, subDomain) => {
   }
 };
 
-if (settings.switchFrames) {
-  const domain = domainValues[settings.domain];
-  switchFrames(domain);
-}
+const switchAll = () => {
+  if (settings.switchFrames) {
+    const domain = domainValues[settings.domain];
+    const subDomain = subDomainValues[settings.subDomain];
+    switchFrames(domain, subDomain);
+  }
 
-if (settings.switchScripts) {
-  const domain = domainValues[settings.domain];
-  switchScripts(domain);
+  if (settings.switchScripts) {
+    const domain = domainValues[settings.domain];
+    const subDomain = subDomainValues[settings.subDomain];
+    switchScripts(domain, subDomain);
+  }
+};
+
+if (document.readyState === 'loading') {
+  // DOM is still loading, wait for the event
+  document.addEventListener('DOMContentLoaded', switchAll);
+} else {
+  // DOM is already ready, run immediately
+  switchAll();
 }
